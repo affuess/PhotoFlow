@@ -36,7 +36,7 @@ export function usePosts() {
           await offlineDao.removeAction(action.id);
         } catch (e) {
           console.error('Помилка синхронізації елемента:', e);
-          break; 
+          break;
         }
       }
       await loadLocalPosts();
@@ -77,6 +77,8 @@ export function usePosts() {
       title: payload.title,
       description: payload.description,
       image_uri: payload.image_uri,
+      file_uri: payload.file_uri,
+      file_name: payload.file_name,
       created_at: new Date().toISOString(),
       synced: isConnected ? 1 : 0,
     };

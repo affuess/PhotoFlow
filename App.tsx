@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Button, FlatList, TextInput, Image, TouchableOpacity, Alert, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import { useOfflineFeed } from './src/hooks/useOfflineFeed';
 import { initDatabase } from './src/database/db';
 
@@ -10,6 +11,8 @@ export default function App() {
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [fileUri, setFileUri] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
 
   React.useEffect(() => {
     initDatabase().catch(err => console.error("DB Init Error:", err));
@@ -36,16 +39,35 @@ export default function App() {
     }
   };
 
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*', 
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        setFileUri(file.uri);
+        setFileName(file.name);
+      }
+    } catch (err) {
+      console.log('Error picking document:', err);
+    }
+  };
+
   const handleAdd = () => {
     if (!title) {
       Alert.alert('Error', 'Title is required');
       return;
     }
-    saveNote(title, desc, imageUri || undefined);
+    saveNote(title, desc, imageUri || undefined, fileUri || undefined, fileName || undefined);
     
     setTitle('');
     setDesc('');
     setImageUri(null);
+    setFileUri(null);
+    setFileName(null);
   };
 
   return (
@@ -68,11 +90,22 @@ export default function App() {
           style={styles.input}
         />
 
-        <TouchableOpacity style={styles.imagePickerBtn} onPress={pickImage}>
-          <Text>+ Add Photo</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonsRow}>
+          <TouchableOpacity style={[styles.pickerBtn, { marginRight: 8 }]} onPress={pickImage}>
+            <Text>+ Add Photo</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.pickerBtn} onPress={pickDocument}>
+            <Text>+ Add File</Text>
+          </TouchableOpacity>
+        </View>
 
         {imageUri && <Image source={{ uri: imageUri }} style={styles.previewImage} />}
+        {fileName && (
+          <Text style={styles.fileAttachedText}>
+            📎 File: {fileName}
+          </Text>
+        )}
 
         <Button title="Save Note" onPress={handleAdd} color="#2196F3" />
       </View>
@@ -88,6 +121,9 @@ export default function App() {
             <View style={styles.itemTextContainer}>
               <Text style={styles.title}>{item.title}</Text>
               <Text>{item.description}</Text>
+              {item.file_name && (
+                <Text style={styles.fileTag}>📎 {item.file_name}</Text>
+              )}
               <Text style={styles.sync}>
                 Synced: {item.synced ? '✅ Yes' : '❌ No'}
               </Text>
@@ -129,12 +165,17 @@ const styles = StyleSheet.create({
     borderRadius: 5, 
     backgroundColor: '#fafafa' 
   },
-  imagePickerBtn: { 
+  buttonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  pickerBtn: { 
+    flex: 1,
     backgroundColor: '#e0e0e0', 
     padding: 10, 
     alignItems: 'center', 
     borderRadius: 5, 
-    marginBottom: 10 
   },
   previewImage: { 
     width: 100, 
@@ -142,6 +183,12 @@ const styles = StyleSheet.create({
     marginBottom: 10, 
     borderRadius: 5, 
     alignSelf: 'center' 
+  },
+  fileAttachedText: {
+    fontSize: 12,
+    color: '#333',
+    marginBottom: 10,
+    fontStyle: 'italic',
   },
   header: { 
     fontSize: 22, 
@@ -168,6 +215,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold', 
     fontSize: 16, 
     marginBottom: 4 
+  },
+  fileTag: {
+    fontSize: 12,
+    color: '#2196F3',
+    marginTop: 4,
   },
   sync: { 
     fontSize: 10, 

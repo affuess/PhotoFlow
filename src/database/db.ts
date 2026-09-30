@@ -13,10 +13,14 @@ export const initDatabase = async (): Promise<void> => {
       title TEXT NOT NULL,
       description TEXT,
       image_uri TEXT,
+      file_uri TEXT,
+      file_name TEXT,
       created_at TEXT NOT NULL,
       synced INTEGER DEFAULT 1
     );
-    
+  `);
+
+  await db.execAsync(`
     CREATE TABLE IF NOT EXISTS offline_actions(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       endpoint TEXT NOT NULL,
@@ -26,5 +30,5 @@ export const initDatabase = async (): Promise<void> => {
     );
   `);
 
-  console.log("Database created");
+  console.log("Database created / updated");
 };

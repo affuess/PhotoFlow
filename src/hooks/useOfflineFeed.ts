@@ -64,7 +64,13 @@ export function useOfflineFeed() {
         }
     }, []);
 
-    const saveNote = async (title: string, description: string, imageUri?: string) => {
+    const saveNote = async (
+        title: string, 
+        description: string, 
+        imageUri?: string,
+        fileUri?: string,
+        fileName?: string
+    ) => {
         const netState = await NetInfo.fetch();
         const isConnected = !!netState.isConnected;
 
@@ -73,6 +79,8 @@ export function useOfflineFeed() {
             title,
             description,
             image_uri: imageUri,
+            file_uri: fileUri,
+            file_name: fileName,
             created_at: new Date().toISOString(),
             synced: isConnected ? 1 : 0,
         };
